@@ -26,9 +26,9 @@ end
 
 case node.platform
 when "windows"
-  include_recipe "sensu::_windows"
+  include_recipe "sensu-chef::_windows"
 else
-  include_recipe "sensu::_linux"
+  include_recipe "sensu-chef::_linux"
 end
 
 directory node.sensu.log_directory do
