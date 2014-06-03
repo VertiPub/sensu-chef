@@ -26,8 +26,8 @@ when "debian"
   include_recipe "apt"
 
   apt_repository "sensu" do
-    uri "http://repos.sensuapp.org/apt"
-    key "http://repos.sensuapp.org/apt/pubkey.gpg"
+    uri node.sensu.apt_repo_url
+    key "#{node.sensu.apt_repo_url}/pubkey.gpg"
     distribution "sensu"
     components node.sensu.use_unstable_repo ? ["unstable"] : ["main"]
     action :add
@@ -40,37 +40,43 @@ when "debian"
 when "rhel"
   include_recipe "yum"
 
-  yum_repository "sensu" do
+  rhel_version_equivalent = platform?("amazon") ? 6 : node.platform_version.to_i
+
+  repo = yum_repository "sensu" do
     description "sensu monitoring"
     repo = node.sensu.use_unstable_repo ? "yum-unstable" : "yum"
-    url "http://repos.sensuapp.org/#{repo}/el/#{node['platform_version'].to_i}/$basearch/"
+    url "#{node.sensu.yum_repo_url}/#{repo}/el/#{rhel_version_equivalent}/$basearch/"
     action :add
   end
+  repo.gpgcheck(false) if repo.respond_to?(:gpgcheck)
 when "fedora"
   include_recipe "yum"
 
-  rhel_version_equivalent = case node.platform_version.to_i
+  platform_version = node.platform_version.to_i
+  rhel_version_equivalent = case platform_version
   when 6..11  then 5
   when 12..18 then 6
   # TODO: 18+ will map to rhel7 but we don't have sensu builds for that yet
   else
-    raise "I don't know how to map fedora version #{node['platform_version']} to a RHEL version. aborting"
+    raise "I don't know how to map fedora version #{platform_version} to a RHEL version. aborting"
   end
 
-  yum_repository "sensu" do
+  repo = yum_repository "sensu" do
     description "sensu monitoring"
     repo = node.sensu.use_unstable_repo ? "yum-unstable" : "yum"
-    url "http://repos.sensuapp.org/#{repo}/el/#{rhel_version_equivalent}/$basearch/"
+    url "#{node.sensu.yum_repo_url}/#{repo}/el/#{rhel_version_equivalent}/$basearch/"
     action :add
   end
+  repo.gpgcheck(false) if repo.respond_to?(:gpgcheck)
 end
 
 package "sensu" do
   version node.sensu.version
   options package_options
-  notifies :create, "ruby_block[sensu_service_trigger]", :immediately
+  notifies :create, "ruby_block[sensu_service_trigger]"
 end
 
 template "/etc/default/sensu" do
   source "sensu.default.erb"
+  notifies :create, "ruby_block[sensu_service_trigger]"
 end

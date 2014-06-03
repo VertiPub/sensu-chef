@@ -32,23 +32,40 @@ vagrant ssh
 * [YUM](http://community.opscode.com/cookbooks/yum)
 * [Windows](http://community.opscode.com/cookbooks/windows)
 * [RabbitMQ](http://community.opscode.com/cookbooks/rabbitmq)
-* [Redis*](https://github.com/miah/chef-redis)
+* [RedisIO](http://community.opscode.com/cookbooks/redisio)
 
 ## REQUIREMENTS
 
 ### SSL configuration
 
-Running Sensu with SSL is recommended, this cookbook uses a data bag
+Running Sensu with SSL is recommended; this cookbook uses a data bag
 `sensu`, with an item `ssl`, containing the SSL certificates required.
-This cookbook comes with a tool to generate the certificates and data
-bag item. If the integrity of the certificates is ever compromised,
-you must regenerate and redeploy them.
+Sensu data bag items may be encrypted. This cookbook comes with a tool
+to generate the certificates and data bag item. If the integrity of
+the certificates is ever compromised, you must regenerate and redeploy
+them.
 
 ```
 cd examples/ssl
 ./ssl_certs.sh generate
 knife data bag create sensu
+```
+
+Use the plain-text data bag item:
+
+``` shell
 knife data bag from file sensu ssl.json
+```
+
+Or, encrypted it with your data bag secret. See [Encrypt a Data
+Bag](http://docs.opscode.com/essentials_data_bags_encrypt.html) for
+more information.
+
+```
+knife data bag --secret-file /path/to/your/secret from file sensu ssl.json
+```
+
+``` shell
 ./ssl_certs.sh clean
 ```
 
@@ -68,9 +85,8 @@ community RabbitMQ cookbook LWRP's.
 
 ### sensu::redis
 
-Installs and configures Redis for Sensu. This recipe uses Miah's
-Redis cookbook. Please do not use this recipe if you use a different
-Redis cookbook, modify your run_list/role to include your own.
+Installs and configures Redis for Sensu. This recipe uses the
+RedisIO cookbook and installs Redis from source.
 
 ### sensu::server_service
 
@@ -101,10 +117,18 @@ Enables and starts the Sensu dashboard.
 
 `node.sensu.log_directory` - Sensu log directory.
 
+`node.sensu.log_level` - Sensu log level (eg. "warn").
+
 `node.sensu.use_ssl` - If Sensu and RabbitMQ are to use SSL.
 
 `node.sensu.use_embedded_ruby` - If Sensu Ruby handlers and plugins
-are to use the embedded Ruby in the monolithic package.
+use the embedded Ruby in the Sensu package.
+
+`node.sensu.init_style` - Style of init to be used when configuring
+Sensu services, "sysv" and "runit" are currently supported.
+
+`node.sensu.service_max_wait` - How long service scripts should wait
+for Sensu to start/stop.
 
 ### RabbitMQ
 
@@ -205,5 +229,5 @@ end
 
 ## SUPPORT
 
-Please visit #sensu on irc.freenode.net and we will be more than happy
-to help.
+Please visit [sensuapp.org/support](http://sensuapp.org/support) for details on community and commercial
+support resources, including the official IRC channel.
