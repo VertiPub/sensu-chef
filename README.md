@@ -1,3 +1,5 @@
+# This repository has been archived.
+
 ## DESCRIPTION
 
 Provides LWRP's and service recipes to install and configure
